@@ -23,6 +23,9 @@ class Category(db.Model):
     name = Column(String(50), nullable=False, unique=True)
     products = relationship('Product', backref='category', lazy=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Product(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
