@@ -1,10 +1,11 @@
 import hashlib
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
 from app import db, app
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
+from datetime import datetime
 
 class UserRole(RoleEnum):
     ADMIN = 1
@@ -17,6 +18,7 @@ class User(db.Model, UserMixin):
     password = Column(String(50), nullable=False)
     avatar = Column(String(100), nullable=False, default="https://res.cloudinary.com/dxxwcby8l/image/upload/v1690528735/cg6clgelp8zjwlehqsst.jpg")
     user_role = Column(Enum(UserRole), default=UserRole.USER)
+    receipts = relationship('Receipt', backref="user", lazy=True)
 
 class Category(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -37,16 +39,31 @@ class Product(db.Model):
     images = Column(String(100), nullable=True)
     active = Column(Boolean, default=True)
     category_id = Column(Integer, ForeignKey(Category.id), nullable=False)
+    details = relationship('ReceiptDetail', backref='product', lazy=True)
+
+
+class Receipt(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=True)
+    created_date = Column(DateTime, default=datetime.now())
+    details = relationship('ReceiptDetail', backref='receipt', lazy=True)
+
+class ReceiptDetail(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    quantity = Column(Integer, default=0)
+    unit_price = Column(Integer, default = 0)
+    product_id = Column(Integer, ForeignKey(Product.id), nullable=False)
+    receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False)
 
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         #
-        import hashlib
-        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN)
-        db.session.add(u)
-        db.session.commit()
+        # import hashlib
+        # u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN)
+        # db.session.add(u)
+        # db.session.commit()
         # c1 = Category(name="Moble")
         # c2 = Category(name="Tablet")
         # c3 = Category(name="laptop")
